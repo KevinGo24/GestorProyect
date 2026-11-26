@@ -4,9 +4,10 @@ namespace GestorProyect.applications.interfaces;
 
 public interface IProyectoService
 {
-    IReadOnlyCollection<ProyectoDto> ObtenerTodos();
-    ProyectoDto ObtenerPorId(Guid id);
-    ProyectoDto Crear(GuardarProyectoDto dto);
-    ProyectoDto Actualizar(Guid id, GuardarProyectoDto dto);
-    void Eliminar(Guid id);
+    Task<IReadOnlyCollection<ProyectoDto>> ObtenerTodosAsync(CancellationToken cancellationToken = default);
+    Task<ProyectoDto> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ProyectoDto> CrearAsync(GuardarProyectoDto dto, CancellationToken cancellationToken = default);
+    Task<ProyectoDto> ActualizarAsync(Guid id, GuardarProyectoDto dto, CancellationToken cancellationToken = default);
+    Task<AvanceProyectoDto> ObtenerAvanceAsync(Guid id, CancellationToken cancellationToken = default);
+    Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
 }

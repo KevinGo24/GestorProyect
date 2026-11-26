@@ -8,7 +8,7 @@ public sealed record TareaDto(
     string Descripcion,
     EstadoTarea Estado,
     string Prioridad,
-    DateTime FechaLimite,
+    DateOnly FechaLimite,
     Guid ProyectoId);
 
 public sealed record GuardarTareaDto(
@@ -16,5 +16,7 @@ public sealed record GuardarTareaDto(
     string Descripcion,
     EstadoTarea Estado,
     string Prioridad,
-    DateTime FechaLimite,
+    DateOnly FechaLimite,
     Guid ProyectoId);
+
+public sealed record CambiarEstadoTareaDto(EstadoTarea Estado);

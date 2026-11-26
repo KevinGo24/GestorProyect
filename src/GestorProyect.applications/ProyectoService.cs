@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using GestorProyect.applications.dtos;
 using GestorProyect.applications.exeptions;
 using GestorProyect.applications.interfaces;
@@ -8,15 +7,27 @@ namespace GestorProyect.applications;
 
 public sealed class ProyectoService : IProyectoService
 {
-    private readonly ConcurrentDictionary<Guid, Proyecto> _proyectos = new();
+    private readonly IProyectoRepository _proyectos;
+    private readonly ITareaRepository _tareas;
 
-    public IReadOnlyCollection<ProyectoDto> ObtenerTodos() =>
-        _proyectos.Values.Select(Mapear).ToArray();
+    public ProyectoService(IProyectoRepository proyectos, ITareaRepository tareas)
+    {
+        _proyectos = proyectos ?? throw new ArgumentNullException(nameof(proyectos));
+        _tareas = tareas ?? throw new ArgumentNullException(nameof(tareas));
+    }
 
-    public ProyectoDto ObtenerPorId(Guid id) =>
-        Mapear(Encontrar(id));
+    public async Task<IReadOnlyCollection<ProyectoDto>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
+    {
+        var proyectos = await _proyectos.ObtenerTodosAsync(cancellationToken);
+        return proyectos.Select(Mapear).ToArray();
+    }
 
-    public ProyectoDto Crear(GuardarProyectoDto dto)
+    public async Task<ProyectoDto> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        Mapear(await EncontrarAsync(id, cancellationToken));
+
+    public async Task<ProyectoDto> CrearAsync(
+        GuardarProyectoDto dto,
+        CancellationToken cancellationToken = default)
     {
         Validar(dto);
         var proyecto = new Proyecto
@@ -28,31 +39,51 @@ public sealed class ProyectoService : IProyectoService
             FechaFinalizacion = dto.FechaFinalizacion
         };
 
-        _proyectos[proyecto.Id] = proyecto;
+        await _proyectos.AgregarAsync(proyecto, cancellationToken);
         return Mapear(proyecto);
     }
 
-    public ProyectoDto Actualizar(Guid id, GuardarProyectoDto dto)
+    public async Task<ProyectoDto> ActualizarAsync(
+        Guid id,
+        GuardarProyectoDto dto,
+        CancellationToken cancellationToken = default)
     {
         Validar(dto);
-        var proyecto = Encontrar(id);
+        var proyecto = await EncontrarAsync(id, cancellationToken);
         proyecto.Nombre = dto.Nombre.Trim();
         proyecto.Descripcion = dto.Descripcion?.Trim() ?? string.Empty;
         proyecto.FechaInicio = dto.FechaInicio;
         proyecto.FechaFinalizacion = dto.FechaFinalizacion;
+        await _proyectos.GuardarCambiosAsync(cancellationToken);
         return Mapear(proyecto);
     }
 
-    public void Eliminar(Guid id)
+    public async Task EliminarAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        if (!_proyectos.TryRemove(id, out _))
+        var proyecto = await EncontrarAsync(id, cancellationToken);
+        if (await _tareas.TieneTareasPendientesAsync(id, cancellationToken))
         {
-            throw new RecursoNoEncontradoException("el proyecto", id);
+            throw new ValidacionAplicacionException(
+                "No se puede eliminar el proyecto porque tiene tareas pendientes.");
         }
+
+        await _proyectos.EliminarAsync(proyecto, cancellationToken);
     }
 
-    private Proyecto Encontrar(Guid id) =>
-        _proyectos.TryGetValue(id, out var proyecto)
+    public async Task<AvanceProyectoDto> ObtenerAvanceAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await EncontrarAsync(id, cancellationToken);
+        var total = await _tareas.ContarPorProyectoAsync(id, cancellationToken);
+        var completadas = await _tareas.ContarPorEstadoAsync(id, EstadoTarea.Completada, cancellationToken);
+        var porcentaje = total == 0 ? 0m : decimal.Round(completadas * 100m / total, 2);
+
+        return new AvanceProyectoDto(id, total, completadas, porcentaje);
+    }
+
+    private async Task<Proyecto> EncontrarAsync(Guid id, CancellationToken cancellationToken) =>
+        await _proyectos.ObtenerPorIdAsync(id, cancellationToken) is { } proyecto
             ? proyecto
             : throw new RecursoNoEncontradoException("el proyecto", id);
 

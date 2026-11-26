@@ -7,6 +7,6 @@ public class Tarea
     public string Descripcion { get; set; } = string.Empty;
     public EstadoTarea Estado { get; set; } = EstadoTarea.Pendiente;
     public string Prioridad { get; set; } = string.Empty;
-    public DateTime FechaLimite { get; set; }
+    public DateOnly FechaLimite { get; set; }
     public Guid ProyectoId { get; set; }
 }

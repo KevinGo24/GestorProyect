@@ -9,8 +9,8 @@ public static class DependencyInjection
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<IProyectoService, ProyectoService>();
-        services.AddSingleton<ITareaService, TareaService>();
+        services.AddScoped<IProyectoService, ProyectoService>();
+        services.AddScoped<ITareaService, TareaService>();
 
         return services;
     }

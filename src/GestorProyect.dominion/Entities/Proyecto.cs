@@ -5,6 +5,6 @@ public class Proyecto
     public Guid Id { get; set; }
     public string Nombre { get; set; } = string.Empty;
     public string Descripcion { get; set; } = string.Empty;
-    public DateTime FechaInicio { get; set; }
-    public DateTime FechaFinalizacion { get; set; }
+    public DateOnly FechaInicio { get; set; }
+    public DateOnly FechaFinalizacion { get; set; }
 }
