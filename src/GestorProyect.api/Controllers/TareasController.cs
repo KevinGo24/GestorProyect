@@ -7,11 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace GestorProyect.api.Controllers;
 
 [ApiController]
-[Route("api/tareas")]
+[Route("api/v1/tareas")]
 [Produces("application/json")]
 public sealed class TareasController(ITareaService tareas) : ControllerBase
 {
     [HttpGet]
+    [EndpointSummary("Lista y filtra tareas")]
+    [EndpointDescription("Devuelve tareas y acepta filtros opcionales por proyectoId, estado y prioridad.")]
     [ProducesResponseType<IReadOnlyCollection<TareaDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyCollection<TareaDto>>> ObtenerTodos(
         [FromQuery] Guid? proyectoId,
@@ -30,12 +32,16 @@ public sealed class TareasController(ITareaService tareas) : ControllerBase
     }
 
     [HttpGet("vencidas")]
+    [EndpointSummary("Lista tareas vencidas")]
+    [EndpointDescription("Devuelve tareas cuya fecha límite ya pasó y que todavía no están completadas.")]
     [ProducesResponseType<IReadOnlyCollection<TareaDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyCollection<TareaDto>>> ObtenerVencidas(
         CancellationToken cancellationToken) =>
         Ok(await tareas.ObtenerVencidasNoCompletadasAsync(cancellationToken));
 
     [HttpGet("{id:guid}")]
+    [EndpointSummary("Obtiene una tarea")]
+    [EndpointDescription("Busca una tarea por su identificador. Devuelve 404 si no existe.")]
     [ProducesResponseType<TareaDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TareaDto>> ObtenerPorId(Guid id, CancellationToken cancellationToken)
@@ -51,6 +57,8 @@ public sealed class TareasController(ITareaService tareas) : ControllerBase
     }
 
     [HttpPost]
+    [EndpointSummary("Crea una tarea")]
+    [EndpointDescription("Registra una tarea asociada a un proyecto existente. Valida título, estado y prioridad.")]
     [ProducesResponseType<TareaDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
@@ -74,6 +82,8 @@ public sealed class TareasController(ITareaService tareas) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [EndpointSummary("Actualiza una tarea")]
+    [EndpointDescription("Reemplaza los datos de la tarea indicada. Devuelve 404 si no existe o el proyecto no existe, y 400 si los datos no son válidos.")]
     [ProducesResponseType<TareaDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
@@ -97,6 +107,8 @@ public sealed class TareasController(ITareaService tareas) : ControllerBase
     }
 
     [HttpPatch("{id:guid}/estado")]
+    [EndpointSummary("Cambia el estado de una tarea")]
+    [EndpointDescription("Actualiza únicamente el estado de la tarea. Los valores válidos son Pendiente, EnProgreso y Completada.")]
     [ProducesResponseType<TareaDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
@@ -120,6 +132,8 @@ public sealed class TareasController(ITareaService tareas) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [EndpointSummary("Elimina una tarea")]
+    [EndpointDescription("Elimina la tarea indicada. Devuelve 404 si no existe.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Eliminar(Guid id, CancellationToken cancellationToken)

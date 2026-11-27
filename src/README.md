@@ -7,15 +7,19 @@ Proyecto organizado en capas siguiendo los principios de Clean Architecture.
 ```text
 src/
   GestorProyect.api/              # API y punto de entrada
-  GestorProyect.applications/      # Servicios, interfaces, DTOs y excepciones
-  GestorProyect.dominion/          # Entidades y reglas del dominio
-  GestorProyect.Infratuctur/       # Implementaciones técnicas e infraestructura
+  GestorProyect.Application/       # Servicios, interfaces, DTOs y excepciones
+  GestorProyect.Domain/            # Entidades y reglas del dominio
+  GestorProyect.Infratucture/      # Implementaciones técnicas e infraestructura
     Identity/
     Migrations/
     Persistence/
     Repository/
 test/
-  GestorProyect.test/              # Pruebas automatizadas
+  GestorProyect.Applications.Unitest/ # Pruebas unitarias de aplicación
+  GestorProyect.Domain.UnitTest/      # Pruebas unitarias de dominio
+  GestorProyect.Infrastructure.UnitTest/ # Pruebas unitarias de infraestructura
+  GestorProyect.Api.UnitTest/          # Pruebas de OpenAPI y API
+  GestorProyect.test/                 # Pruebas de integración
 ```
 
 ## Referencias entre capas
@@ -29,12 +33,11 @@ test/
 ## Trabajo realizado
 
 - Se agregaron las carpetas `Identity`, `Migrations`, `Persistence` y `Repository` a Infraestructura. Cada carpeta tiene un `.gitkeep` para conservarla mientras esté vacía.
-- Se reemplazó la prueba de ejemplo por pruebas unitarias de `ProyectoService` y `TareaService`. Cubren creación, actualización, eliminación y validaciones.
-- Se agregó al proyecto de pruebas una referencia a Aplicación.
+- Se agregaron pruebas unitarias de `ProyectoService` y `TareaService`, reglas de `Prioridad` y repositorios de EF Core con InMemory.
 - Se agregaron las referencias entre proyectos descritas en la sección anterior.
 - Se agregó `GestorProyectDbContext` para PostgreSQL y la migración inicial `InitialCreate`, con las tablas `Proyectos` y `Tareas`.
 - Los servicios CRUD usan repositorios de EF Core para leer y guardar proyectos y tareas en PostgreSQL.
-- Se integró Swagger UI para explorar la API y enviar solicitudes desde el navegador en `/swagger` (solo en Development). La especificación OpenAPI está en `/openapi/v1.json`; los controladores CRUD están disponibles bajo `/api/proyectos` y `/api/tareas`.
+- Se integró Swagger UI para explorar la API y enviar solicitudes desde el navegador en `/swagger` (solo en Development). La especificación OpenAPI está en `/openapi/v1.json`; cada operación incluye resumen y descripción, y las rutas están versionadas bajo `/api/v1/proyectos` y `/api/v1/tareas`.
 - Las fechas de inicio, finalización y vencimiento son fechas sin hora: la API recibe y devuelve `dd-MM-yy` (por ejemplo, `25-11-26`) y PostgreSQL las almacena como `date`.
 - Se pueden consultar tareas por proyecto, estado y prioridad; consultar tareas vencidas no completadas; cambiar el estado de una tarea; y consultar el avance de un proyecto.
 - La eliminación de un proyecto se rechaza mientras tenga tareas en estado `Pendiente`. Las prioridades permitidas son `Baja`, `Media` y `Alta`; los estados son `Pendiente`, `EnProgreso` y `Completada`.
@@ -43,11 +46,11 @@ test/
 
 | Operación | Ruta |
 |---|---|
-| Listar y filtrar tareas | `GET /api/tareas?proyectoId={guid}&estado=Pendiente&prioridad=Alta` |
-| Listar tareas de un proyecto | `GET /api/proyectos/{id}/tareas` |
-| Consultar tareas vencidas no completadas | `GET /api/tareas/vencidas` |
-| Cambiar el estado de una tarea | `PATCH /api/tareas/{id}/estado` |
-| Calcular el avance del proyecto | `GET /api/proyectos/{id}/avance` |
+| Listar y filtrar tareas | `GET /api/v1/tareas?proyectoId={guid}&estado=Pendiente&prioridad=Alta` |
+| Listar tareas de un proyecto | `GET /api/v1/proyectos/{id}/tareas` |
+| Consultar tareas vencidas no completadas | `GET /api/v1/tareas/vencidas` |
+| Cambiar el estado de una tarea | `PATCH /api/v1/tareas/{id}/estado` |
+| Calcular el avance del proyecto | `GET /api/v1/proyectos/{id}/avance` |
 
 El cambio de estado recibe un JSON como `{"estado":"Completada"}`. El avance devuelve el total de tareas, cuántas están completadas y el porcentaje completado; para un proyecto sin tareas, el porcentaje es `0`.
 
@@ -57,7 +60,7 @@ Las pruebas de integración levantan la API en memoria y usan PostgreSQL real. C
 
 ```bash
 export GESTORPROYECT_TEST_CONNECTION='Host=<servidor>;Port=5432;Database=<base_pruebas>;Username=<usuario>;Password=<contraseña>;SSL Mode=Require'
-dotnet test test/GestorProyect.test/GestorProyect.test.csproj
+dotnet test gestorproyect.slnx
 ```
 
 La suite crea un esquema con nombre único, aplica las migraciones ahí y lo elimina al terminar; el usuario necesita permisos para crear y eliminar esquemas. Si la variable no está definida, NUnit omite las pruebas de integración y ejecuta las unitarias.
@@ -80,5 +83,5 @@ Desde la raíz del repositorio:
 
 ```bash
 dotnet build gestorproyect.slnx
-dotnet test test/GestorProyect.test/GestorProyect.test.csproj
+dotnet test gestorproyect.slnx
 ```

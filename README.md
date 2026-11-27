@@ -18,7 +18,7 @@ Entregar un backend que permita gestionar el ciclo de vida de proyectos y tareas
 - Validaciones para nombres, títulos, prioridades, estados, fechas y referencias a proyectos.
 - Respuestas HTTP para recursos no encontrados y solicitudes inválidas, además de manejo global de errores.
 - Persistencia con Entity Framework Core y PostgreSQL, migración inicial y documentación OpenAPI/Swagger.
-- Pruebas unitarias para servicios y pruebas de integración configuradas para ejecutar la API contra PostgreSQL.
+- Pruebas unitarias para API, aplicación, dominio e infraestructura, además de pruebas de integración configuradas para ejecutar la API contra PostgreSQL.
 
 ## API
 
@@ -26,13 +26,13 @@ La API documenta sus endpoints en Swagger UI bajo `/swagger` cuando se ejecuta e
 
 | Funcionalidad | Método y ruta |
 |---|---|
-| CRUD de proyectos | `/api/proyectos` |
-| Tareas de un proyecto | `GET /api/proyectos/{id}/tareas` |
-| Avance del proyecto | `GET /api/proyectos/{id}/avance` |
-| CRUD de tareas | `/api/tareas` |
-| Filtrar tareas | `GET /api/tareas?proyectoId={guid}&estado=Pendiente&prioridad=Alta` |
-| Tareas vencidas no completadas | `GET /api/tareas/vencidas` |
-| Cambiar estado | `PATCH /api/tareas/{id}/estado` |
+| CRUD de proyectos | `/api/v1/proyectos` |
+| Tareas de un proyecto | `GET /api/v1/proyectos/{id}/tareas` |
+| Avance del proyecto | `GET /api/v1/proyectos/{id}/avance` |
+| CRUD de tareas | `/api/v1/tareas` |
+| Filtrar tareas | `GET /api/v1/tareas?proyectoId={guid}&estado=Pendiente&prioridad=Alta` |
+| Tareas vencidas no completadas | `GET /api/v1/tareas/vencidas` |
+| Cambiar estado | `PATCH /api/v1/tareas/{id}/estado` |
 
 El cambio de estado recibe, por ejemplo, `{"estado":"Completada"}`. Los estados permitidos son `Pendiente`, `EnProgreso` y `Completada`; las prioridades permitidas son `Baja`, `Media` y `Alta`. Las fechas se reciben y devuelven en formato `dd-MM-yy`.
 
@@ -41,16 +41,35 @@ El cambio de estado recibe, por ejemplo, `{"estado":"Completada"}`. Los estados 
 ```text
 src/
   GestorProyect.api/          API HTTP, controladores y configuración
-  GestorProyect.applications/ Servicios, DTOs, interfaces y reglas de aplicación
-  GestorProyect.dominion/     Entidades y conceptos del dominio
-  GestorProyect.Infratuctur/  EF Core, PostgreSQL y repositorios
+  GestorProyect.Application/  Servicios, DTOs, interfaces y reglas de aplicación
+  GestorProyect.Domain/       Entidades y conceptos del dominio
+  GestorProyect.Infratucture/ EF Core, PostgreSQL y repositorios
 test/
-  GestorProyect.test/         Pruebas unitarias y de integración
+  GestorProyect.Api.UnitTest/
+  GestorProyect.Applications.Unitest/
+  GestorProyect.Domain.UnitTest/
+  GestorProyect.Infrastructure.UnitTest/
+  GestorProyect.test/         Pruebas de integración
 ```
 
 ## Configuración y ejecución
 
-Configura `ConnectionStrings__DefaultConnection` con la conexión a PostgreSQL. No guardes contraseñas en archivos versionados.
+La API se conecta a PostgreSQL mediante la variable de entorno `ConnectionStrings__DefaultConnection`. Para desarrollo local, puedes guardarla en un archivo `.env` en la raíz (el `.env` está ignorado por Git):
+
+```env
+ConnectionStrings__DefaultConnection='Host=<servidor>.postgres.database.azure.com;Port=5432;Database=<base>;Username=<usuario>;Password=<contraseña>;SSL Mode=Require'
+```
+
+.NET no carga archivos `.env` automáticamente. En Bash, carga las variables y ejecuta la API desde la raíz:
+
+```bash
+set -a
+. ./.env
+set +a
+dotnet run --project src/GestorProyect.api/GestorProyect.api.csproj
+```
+
+En Azure, configura `ConnectionStrings__DefaultConnection` como variable de entorno en la configuración de la aplicación o usa Azure Key Vault; no despliegues el `.env` ni guardes credenciales en archivos versionados. En Azure Database for PostgreSQL, habilita SSL y permite en el firewall únicamente las IP necesarias.
 
 ```bash
 dotnet build gestorproyect.slnx
@@ -70,13 +89,7 @@ dotnet ef database update \
 Ejecuta la suite con:
 
 ```bash
-dotnet test test/GestorProyect.test/GestorProyect.test.csproj
+dotnet test gestorproyect.slnx
 ```
 
-Las pruebas unitarias verificadas actualmente pasan. Las pruebas de integración levantan la API en memoria y requieren PostgreSQL; hasta configurar una base de pruebas exclusiva, NUnit las omite. Para ejecutarlas, configura `GESTORPROYECT_TEST_CONNECTION` con la cadena de conexión de esa base. La suite crea un esquema temporal, aplica las migraciones y lo elimina al finalizar; el usuario necesita permisos para crear y eliminar esquemas. **No uses una base de producción para estas pruebas.**
-
-## Próximas metas
-
-- Ejecutar las pruebas de integración contra una base PostgreSQL de pruebas y registrar el resultado.
-- Configurar PostgreSQL de Azure con reglas de red seguras y conexión cifrada.
-- Automatizar compilación y pruebas en CI.
+Las pruebas unitarias de aplicación, dominio e infraestructura usan dependencias simuladas o EF Core InMemory. Las pruebas de integración levantan la API en memoria y requieren PostgreSQL; sin una base de pruebas exclusiva, NUnit las omite. Para ejecutarlas, configura `GESTORPROYECT_TEST_CONNECTION` con la cadena de conexión de esa base. La suite crea un esquema temporal, aplica las migraciones y lo elimina al finalizar; el usuario necesita permisos para crear y eliminar esquemas. **No uses una base de producción para estas pruebas.**

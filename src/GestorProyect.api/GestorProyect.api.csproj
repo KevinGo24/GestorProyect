@@ -16,8 +16,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\GestorProyect.applications\GestorProyect.applications.csproj" />
-        <ProjectReference Include="..\GestorProyect.Infratuctur\GestorProyect.Infratuctur.csproj" />
+        <ProjectReference Include="..\GestorProyect.Application\GestorProyect.Application.csproj" />
+        <ProjectReference Include="..\GestorProyect.Infratucture\GestorProyect.Infratucture.csproj" />
     </ItemGroup>
 
 </Project>

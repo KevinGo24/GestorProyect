@@ -1,7 +1,11 @@
 <Solution>
   <Project Path="src/GestorProyect.api/GestorProyect.api.csproj" />
-  <Project Path="src/GestorProyect.applications/GestorProyect.applications.csproj" />
-  <Project Path="src/GestorProyect.Infratuctur/GestorProyect.Infratuctur.csproj" />
-  <Project Path="src\GestorProyect.dominion\GestorProyect.dominion.csproj" />
+  <Project Path="src\GestorProyect.Application\GestorProyect.Application.csproj" />
+  <Project Path="src\GestorProyect.Domain\GestorProyect.Domain.csproj" />
+  <Project Path="src\GestorProyect.Infratucture\GestorProyect.Infratucture.csproj" />
+  <Project Path="test/GestorProyect.Applications.Unitest/GestorProyect.Applications.Unitest.csproj" />
+  <Project Path="test/GestorProyect.Domain.UnitTest/GestorProyect.Domain.UnitTest.csproj" />
+  <Project Path="test/GestorProyect.Infrastructure.UnitTest/GestorProyect.Infrastructure.UnitTest.csproj" />
+  <Project Path="test/GestorProyect.Api.UnitTest/GestorProyect.Api.UnitTest.csproj" />
   <Project Path="test/GestorProyect.test/GestorProyect.test.csproj" />
 </Solution>

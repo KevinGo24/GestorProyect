@@ -20,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\GestorProyect.applications\GestorProyect.applications.csproj" />
+        <ProjectReference Include="..\..\src\GestorProyect.Application\GestorProyect.Application.csproj" />
         <ProjectReference Include="..\..\src\GestorProyect.api\GestorProyect.api.csproj" />
     </ItemGroup>
 

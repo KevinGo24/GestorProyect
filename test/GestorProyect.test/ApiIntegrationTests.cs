@@ -82,7 +82,7 @@ public sealed class ApiIntegrationTests
     public async Task Api_PermiteCrearConsultarActualizarYEliminarProyectoYTarea()
     {
         var projectId = await CrearProyectoAsync();
-        var taskResponse = await Client.PostAsJsonAsync("/api/tareas", new
+        var taskResponse = await Client.PostAsJsonAsync("/api/v1/tareas", new
         {
             titulo = "Integración API",
             descripcion = "CRUD",
@@ -96,12 +96,12 @@ public sealed class ApiIntegrationTests
         using var createdTask = JsonDocument.Parse(await taskResponse.Content.ReadAsStringAsync());
         var taskId = createdTask.RootElement.GetProperty("id").GetGuid();
 
-        Assert.That((await Client.GetAsync($"/api/proyectos/{projectId}")).StatusCode,
+        Assert.That((await Client.GetAsync($"/api/v1/proyectos/{projectId}")).StatusCode,
             Is.EqualTo(HttpStatusCode.OK));
-        Assert.That((await Client.GetAsync($"/api/tareas/{taskId}")).StatusCode,
+        Assert.That((await Client.GetAsync($"/api/v1/tareas/{taskId}")).StatusCode,
             Is.EqualTo(HttpStatusCode.OK));
 
-        var updateResponse = await Client.PutAsJsonAsync($"/api/tareas/{taskId}", new
+        var updateResponse = await Client.PutAsJsonAsync($"/api/v1/tareas/{taskId}", new
         {
             titulo = "Tarea actualizada",
             descripcion = "CRUD",
@@ -111,9 +111,9 @@ public sealed class ApiIntegrationTests
             proyectoId = projectId
         });
         Assert.That(updateResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        Assert.That((await Client.DeleteAsync($"/api/tareas/{taskId}")).StatusCode,
+        Assert.That((await Client.DeleteAsync($"/api/v1/tareas/{taskId}")).StatusCode,
             Is.EqualTo(HttpStatusCode.NoContent));
-        Assert.That((await Client.DeleteAsync($"/api/proyectos/{projectId}")).StatusCode,
+        Assert.That((await Client.DeleteAsync($"/api/v1/proyectos/{projectId}")).StatusCode,
             Is.EqualTo(HttpStatusCode.NoContent));
     }
 
@@ -129,15 +129,15 @@ public sealed class ApiIntegrationTests
             DateOnly.FromDateTime(DateTime.Today.AddDays(-1)));
 
         using var projectTasks = JsonDocument.Parse(
-            await Client.GetStringAsync($"/api/proyectos/{projectId}/tareas"));
+            await Client.GetStringAsync($"/api/v1/proyectos/{projectId}/tareas"));
         Assert.That(projectTasks.RootElement.GetArrayLength(), Is.EqualTo(3));
 
         using var filtered = JsonDocument.Parse(await Client.GetStringAsync(
-            $"/api/tareas?proyectoId={projectId}&estado=Pendiente&prioridad=Alta"));
+            $"/api/v1/tareas?proyectoId={projectId}&estado=Pendiente&prioridad=Alta"));
         Assert.That(filtered.RootElement.GetArrayLength(), Is.EqualTo(1));
         Assert.That(filtered.RootElement[0].GetProperty("id").GetGuid(), Is.EqualTo(overdueTaskId));
 
-        using var overdue = JsonDocument.Parse(await Client.GetStringAsync("/api/tareas/vencidas"));
+        using var overdue = JsonDocument.Parse(await Client.GetStringAsync("/api/v1/tareas/vencidas"));
         var overdueIds = overdue.RootElement.EnumerateArray()
             .Select(task => task.GetProperty("id").GetGuid()).ToArray();
         Assert.That(overdueIds, Does.Contain(overdueTaskId));
@@ -145,13 +145,13 @@ public sealed class ApiIntegrationTests
         Assert.That(overdueIds, Does.Not.Contain(futureTaskId));
 
         var changeState = await Client.PatchAsJsonAsync(
-            $"/api/tareas/{overdueTaskId}/estado", new { estado = "Completada" });
+            $"/api/v1/tareas/{overdueTaskId}/estado", new { estado = "Completada" });
         Assert.That(changeState.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        using var overdueAfterUpdate = JsonDocument.Parse(await Client.GetStringAsync("/api/tareas/vencidas"));
+        using var overdueAfterUpdate = JsonDocument.Parse(await Client.GetStringAsync("/api/v1/tareas/vencidas"));
         Assert.That(overdueAfterUpdate.RootElement.EnumerateArray()
             .Select(task => task.GetProperty("id").GetGuid()), Does.Not.Contain(overdueTaskId));
 
-        Assert.That((await Client.DeleteAsync($"/api/proyectos/{projectId}")).StatusCode,
+        Assert.That((await Client.DeleteAsync($"/api/v1/proyectos/{projectId}")).StatusCode,
             Is.EqualTo(HttpStatusCode.NoContent));
     }
 
@@ -167,18 +167,18 @@ public sealed class ApiIntegrationTests
             DateOnly.FromDateTime(DateTime.Today.AddDays(2)));
 
         using var progress = JsonDocument.Parse(
-            await Client.GetStringAsync($"/api/proyectos/{projectId}/avance"));
+            await Client.GetStringAsync($"/api/v1/proyectos/{projectId}/avance"));
         Assert.That(progress.RootElement.GetProperty("totalTareas").GetInt32(), Is.EqualTo(3));
         Assert.That(progress.RootElement.GetProperty("tareasCompletadas").GetInt32(), Is.EqualTo(1));
         Assert.That(progress.RootElement.GetProperty("porcentajeAvance").GetDecimal(), Is.EqualTo(33.33m));
 
-        var blockedDelete = await Client.DeleteAsync($"/api/proyectos/{projectId}");
+        var blockedDelete = await Client.DeleteAsync($"/api/v1/proyectos/{projectId}");
         Assert.That(blockedDelete.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
         var changeState = await Client.PatchAsJsonAsync(
-            $"/api/tareas/{pendingTaskId}/estado", new { estado = "Completada" });
+            $"/api/v1/tareas/{pendingTaskId}/estado", new { estado = "Completada" });
         Assert.That(changeState.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        Assert.That((await Client.DeleteAsync($"/api/proyectos/{projectId}")).StatusCode,
+        Assert.That((await Client.DeleteAsync($"/api/v1/proyectos/{projectId}")).StatusCode,
             Is.EqualTo(HttpStatusCode.NoContent));
     }
 
@@ -187,7 +187,7 @@ public sealed class ApiIntegrationTests
 
     private async Task<Guid> CrearProyectoAsync()
     {
-        var response = await Client.PostAsJsonAsync("/api/proyectos", new
+        var response = await Client.PostAsJsonAsync("/api/v1/proyectos", new
         {
             nombre = $"Proyecto {Guid.NewGuid():N}",
             descripcion = "Prueba de integración",
@@ -201,7 +201,7 @@ public sealed class ApiIntegrationTests
 
     private async Task<Guid> CrearTareaAsync(Guid projectId, string state, string priority, DateOnly dueDate)
     {
-        var response = await Client.PostAsJsonAsync("/api/tareas", new
+        var response = await Client.PostAsJsonAsync("/api/v1/tareas", new
         {
             titulo = $"Tarea {Guid.NewGuid():N}",
             descripcion = "Prueba de integración",
